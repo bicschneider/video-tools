@@ -68,6 +68,7 @@ while true ; do
 	done
 	output_file_unspaced="${path_to_file}/${clipname_accept}.mp4"
 
+	clear
 	printf  "Laver videoklip: -i %s -ss %s -t %s %s: " "$input_file" "$starttime_accept" "$length_accept" "${output_file_unspaced}"
 	ffmpeg -hide_banner -loglevel error -i "$input_file" -ss "$starttime_accept" -t "$length_accept" "${output_file_unspaced}" || {
 		exit 1
