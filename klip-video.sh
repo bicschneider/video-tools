@@ -4,6 +4,8 @@ set -euo pipefail
 
 [[ ${debug:-} == true ]] && set -x
 
+delimiter="-@-"
+
 IFS=$'\n'
 if [[ ${1:-} == "" ]]; then 
 	echo "Venligst angiv input video som første parameter.."
@@ -17,7 +19,6 @@ fi
 }  
 input_file=$(realpath "$input_file")
 
-
 path_to_file="$(dirname "$input_file")"
 echo "Alt ser fint ud .. "
 echo 
@@ -27,7 +28,7 @@ echo " - 1 minut: 1:00"
 echo " - 1 time: 1:00:00"
 echo
 echo "Det endelige klip:"
-echo " - filnavn: <katagogiMan skriver bare dit klips navn"
+echo " - filnavn: '<katagori>${delimiter}<type>${delimiter}<kommentar>.mp4' "
 echo " - Alle mellemrum bliver lavet om til '-' ; dvs 'bla bla' bliver lavet om til 'bla-bla'"
 echo " - Programmet sætter selv '.mp4' på den endelige fil; 'bla-bla.mp4'"
 echo " "
@@ -36,26 +37,28 @@ echo " - Afvent sidste konvertering er færdig"
 echo " - '<ctrl> + c' vil til enhver tid stoppe programmet"
 echo " "
 echo "Lad os komme i gang .."
-echo
+printf "Tryk <enter>\n"
+read -r next
+echo "$next"
+clear
 
 ## declare an array variable
-declare -a catagorys=("forsvar" "angreb" "retur" "kontra")
+declare -a catagorys=("forsvar" "angreb" "retur" "kontra" "andet")
 declare -a types=("7mod6" "franskX" "centerX" "fløjX" "rundgang" "special")
-
 
 while true ; do
 	echo "Katagorier:"
 	loop=0
 	for i in "${catagorys[@]}";	do
-		loop=$(( $loop + 1 ))
+		loop=$(( loop + 1 ))
 		echo "${loop}) $i"
 	done
-	printf "Vælg kategori: ( 1 - ${#catagorys[@]} ): "
+	printf "Vælg kategori: ( 1 - %s ): " "${#catagorys[@]}"
 	while true ; do
 		read -r catagory
 		if [[ $catagory -gt ${#catagorys[@]} || $catagory -lt 1 ]]; then
 			echo "ERROR!! forkert input - $catagory - prøv igen.."
-			printf "Vælg kategori: ( 1 - ${#catagorys[@]} ): "
+			printf "Vælg kategori: ( 1 - %s ): " "${#catagorys[@]}"
 		else
 			catagory_txt=${catagorys[$(( loop -1 ))]}
 			echo
@@ -66,15 +69,15 @@ while true ; do
 	echo "Type:"
 	loop=0
 	for i in "${types[@]}";	do
-		loop=$(( $loop + 1 ))
+		loop=$(( loop + 1 ))
 		echo "${loop}) $i"
 	done
-	printf "Vælg type: ( 1 - ${#types[@]} ): "
+	printf "Vælg type: ( 1 - %s ): " "${#types[@]}"
 	while true ; do
 		read -r type
 		if [[ $type -gt ${#types[@]} || $type -lt 1 ]]; then
 			echo "ERROR!! forkert input - $type - prøv igen.."
-			printf "Vælg type: ( 1 - ${#types[@]} ): "
+			printf "Vælg type: ( 1 - %s ): " "${#types[@]}"
 		else
 			type_txt=${types[$(( loop -1 ))]}
 			echo
@@ -92,12 +95,13 @@ while true ; do
 		fi
 	done
 	while [[ ${length_accept:-} == "" ]] ; do
-		echo "Indtast længde på klippet:"
+		echo "Indtast længde på klippet: ( standard: 59 sekunder - bare tryk <enter> )"
 		read -r length
 		if [[ ${length:-} != "" ]] ; then
 			length_accept=$length
 		else
-			echo "Længde er tom... prøv igen"
+			echo "Længde er tom... Vi bruger standarden på 59 sekunder"
+			length_accept=59
 		fi
 	done
 	while [[ ${clipname_accept:-} == "" ]] ; do
@@ -105,19 +109,23 @@ while true ; do
 		read -r clipname
 		if [[ ${clipname:-} != "" ]] ; then
 			clipname_accept=${clipname// /-}
+			echo "Vi bruger '$clipname_accept'"
 		else
-			echo "Navnet på klippet er tomt... prøv igen"
+			echo "Kommentar på klippet er tomt... prøv igen"
 		fi
 	done
-	output_file_unspaced="${path_to_file}/${catagory_txt}@${type_txt}@${clipname_accept}.mp4"
+	output_file_unspaced="${path_to_file}/${catagory_txt}${delimiter}${type_txt}${delimiter}${clipname_accept}.mp4"
 
-	clear
 	printf  "Laver videoklip:\n   -i %s\n   -ss %s\n   -t %s\n   %s: " "$input_file" "$starttime_accept" "$length_accept" "${output_file_unspaced}"
 	ffmpeg -hide_banner -loglevel error -i "$input_file" -ss "$starttime_accept" -t "$length_accept" "${output_file_unspaced}" || {
 		exit 1
 	}
-	printf "Done\n\n"
+	printf "Done\n\nKlar til næste klip - Tryk <enter>"
+	read -r next
+	echo "$next"
+	clear
 	unset starttime_accept
 	unset length_accept
 	unset clipname_accept
+	
 done
