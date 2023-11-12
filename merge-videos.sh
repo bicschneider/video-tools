@@ -2,7 +2,10 @@
 
 set -euo pipefail
 
-[[ ${debug:-} == true ]] && set -x
+[[ ${debug:-} == true ]] && {
+  export debug=true
+  set -x
+}
 
 #######################################
 # Merge mp4 files into one output mp4 file
@@ -33,11 +36,13 @@ function mergemp4() {
 
   # -y: automatically overwrite output file if exists
   # -loglevel quiet: disable ffmpeg logs
-  ffmpeg -y \
-  -f concat \
-  -safe 0 \
-  -i $temp_cat_file \
-  -c copy $outputfile
+  ffmpeg \
+      -y \
+      -hide_banner -loglevel error \
+      -f concat \
+      -safe 0 \
+      -i $temp_cat_file \
+      -c copy $outputfile
 
   if test -f "$outputfile"; then echo "$outputfile created"; fi
   rm -f $temp_cat_file

@@ -4,7 +4,7 @@ set -euo pipefail
 
 [[ ${debug:-} == true ]] && set -x
 
-delimiter="-@-"
+delimiter="--"
 
 IFS=$'\n'
 if [[ ${1:-} == "" ]]; then 
@@ -60,7 +60,7 @@ while true ; do
 			echo "ERROR!! forkert input - $catagory - prøv igen.."
 			printf "Vælg kategori: ( 1 - %s ): " "${#catagorys[@]}"
 		else
-			catagory_txt=${catagorys[$(( loop -1 ))]}
+			catagory_txt=${catagorys[$(( loop - 1 ))]}
 			echo
 			break
 		fi
@@ -117,9 +117,14 @@ while true ; do
 	output_file_unspaced="${path_to_file}/${catagory_txt}${delimiter}${type_txt}${delimiter}${clipname_accept}.mp4"
 
 	printf  "Laver videoklip:\n   -i %s\n   -ss %s\n   -t %s\n   %s: " "$input_file" "$starttime_accept" "$length_accept" "${output_file_unspaced}"
+	epoc_sec_start=$(date +%s)
 	ffmpeg -hide_banner -loglevel error -i "$input_file" -ss "$starttime_accept" -t "$length_accept" "${output_file_unspaced}" || {
 		exit 1
 	}
+	epoc_sec_slut=$(date +%s)	
+	convert_time=$(( epoc_sec_slut - epoc_sec_start ))
+	echo "Konverterede $length_accept på $convert_time sekunder"
+
 	printf "Done\n\nKlar til næste klip - Tryk <enter>"
 	read -r next
 	echo "$next"
@@ -129,3 +134,27 @@ while true ; do
 	unset clipname_accept
 	
 done
+
+# ffmpeg -i input.mp4 \
+# -filter_complex "\
+# 	[0:v]crop=2691:1200:0:0[out1];\
+# 	[0:v]crop=4036:1200:2691:0[out2];\
+# 	[0:v]crop=2691:1200:6727:0[out3];\
+# 	[0:v]crop=4036:1200:9418:0[out4]" \
+# -map [out1] -map 0:a out1.mp4 \
+# -map [out2] -map 0:a out2.mp4 \
+# -map [out3] -map 0:a out3.mp4 \
+# -map [out4] -map 0:a out4.mp4
+
+# The select filter is better for this.
+
+# ffmpeg -i video \
+#        -vf "select='between(t,4,6.5)+between(t,17,26)+between(t,74,91)',
+#             setpts=N/FRAME_RATE/TB" \
+#        -af "aselect='between(t,4,6.5)+between(t,17,26)+between(t,74,91)',
+#             asetpts=N/SR/TB" out.mp4
+#select and its counterpart filter is applied to the video and audio respectively. Segments selected are times 4 to 6.5 seconds, 17 to 26 seconds and finally 74 to 91 seconds. The timestamps are made continuous with the setpts and its counterpart filter..
+
+# Download streaming fra Sportway
+# https://stackoverflow.com/questions/32528595/ffmpeg-mp4-from-http-live-streaming-m3u8-file
+# ffmpeg -i https://cdn.livearenasports.com/blobs0/63b812c58d4b4244f2340119/index.m3u8 -c copy -bsf:a aac_adtstoasc 2023-01-23-HØJ2-Rødovre.mp4
