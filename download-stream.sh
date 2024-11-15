@@ -58,7 +58,7 @@ function download {
         cat ${video_file_name}${_iteration:-}.log
       }
       rm -f ${video_file_name}${_iteration:-}.log 2> /dev/null
-}
+      }
 
 [[ ${1:-} == "" ]] && {
   echo "ERROR: Please provide a url for download as first parameter"
@@ -66,11 +66,18 @@ function download {
   exit 1
 }
 
-dirname="${PWD##*/}"
-export filename_base=${dirname/ /-}
+if [[ ${filename_base:-} == "" ]]; then
+  dirname="${PWD##*/}"
+  export filename_base=${dirname/ /-}
+  echo "INFO: filename_base is empty - use the current dirname as target video filename: $filename_base"
+else
+  echo "INFO: filename_base is set: $filename_base"
+fi
 
-echo "cleanup :  ${filename_base}.mp4"
-rm -f "${filename_base}.mp4"
+[[ -e ${filename_base}.mp4 ]] && {
+  echo "cleanup :  ${filename_base}.mp4"
+  rm -f "${filename_base}.mp4"
+}
 rm -f tmp.*
 ls -1 "${filename_base}-*.mp4" 2> /dev/null | xargs rm -f || true 
 
@@ -94,9 +101,7 @@ else
   wait 
   echo "Download - Done"
   echo "Merge videos"
-  debug=${debug:-} merge-videos.sh
-  echo "rename file: output.mp4 to ${filename_base}.mp4"
-  mv output.mp4 ${filename_base}.mp4
+  debug=${debug:-} merge-videos.sh $(ls -1 ${filename_base}-*.mp4) ${filename_base}.mp4  
   echo "Cleanup" 
   ls -1  ${filename_base}-*.mp4 | xargs rm -f 
   ls -l

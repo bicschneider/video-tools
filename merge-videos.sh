@@ -21,6 +21,7 @@ function mergemp4() {
   outputfile="output.mp4"
 
   rm -f $outputfile
+  rm -f tmp.*
 
   temp_cat_file=$(mktemp -p .)
 
@@ -29,7 +30,9 @@ function mergemp4() {
   if [ $# = 2 ]; then echo "$1 $2" | xargs -I % echo "file './%'" > $temp_cat_file; fi
   if [ $# -ge 3 ]; then
     outputfile=${@: -1} # Get the last argument
-    echo ${@:1:$# - 1} | xargs -I % echo "file './%'" > $temp_cat_file # Get all arguments besides last one as array
+    for file in $( echo ${@:1:$# - 1}) ; do 
+      echo "file './${file}'" >> $temp_cat_file
+    done
   fi
 
   cat $temp_cat_file

@@ -17,3 +17,11 @@ Opdater ofte klip-video.sh
     - HINT: Tryk på `<tab>` og der skulle gerne komme en liste med filer inklusive videoer på skærmen. Nu kan du taste de førte karakterer af video navnet og tryk `<tab>` igen og nu skulle den gerne auto-complete filnavnet
     - Nu skulle der gerne være hjælp på skærmen om hvordan du skal gøre 
 
+# Download et stream link
+## Via browseren
+- Find linket via Developer Tools -> network i browseren
+- Sæt url ind i denne kommando
+    - download-stream.sh [video-url]
+- Hvis du vil "klippe" den i download så kan du komma-separere tidsintervaler med start og til sektioner ss=00:01@to=00:02. Denne metode kan også bruges til at download parallelt, da hver sektioner downloades parallelt og sammensættes bagefter
+    - download-stream.sh [video-url] ss=00:05@to=00:10,ss=14:20@to=49:02,ss=1:03:49@to=1:49:00
+
